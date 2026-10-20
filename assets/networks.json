@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pharos Network Configurations",
+  "default_network": "atlantic",
+  "networks": {
+    "atlantic": {
+      "name": "Pharos Atlantic Testnet",
+      "chain_id": 688689,
+      "chain_id_hex": "0xa8231",
+      "rpc_url": "https://atlantic.dplabs-internal.com",
+      "mcp_url": "https://mcp.pharos.xyz/mcp",
+      "currency_symbol": "PHRS",
+      "decimals": 18,
+      "block_explorer": "https://atlantic.pharosscan.xyz",
+      "is_testnet": true,
+      "supported": true
+    },
+    "pacific": {
+      "name": "Pharos Pacific Mainnet",
+      "chain_id": 1672,
+      "chain_id_hex": "0x688",
+      "rpc_url": "https://pacific.dplabs-internal.com",
+      "currency_symbol": "PHRS",
+      "decimals": 18,
+      "block_explorer": "https://pharosscan.xyz",
+      "is_testnet": false,
+      "supported": false,
+      "safety_notice": "Mainnet transactions strictly disabled in Arena Task 8 evaluation mode."
+    }
+  }
+}
