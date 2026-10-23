@@ -1,5 +1,6 @@
 """
 Unit Tests: Fail-Closed Execution Gatekeeper (Criterion 04)
+Includes regressions for underflow, missing balance, zero/invalid gas price, and malformed calldata.
 """
 
 import pytest
@@ -7,6 +8,7 @@ import pytest
 from executor.decoder import DecodedRevert
 from executor.gatekeeper import ExecutionBlockedError, ExecutionGatekeeper
 from executor.simulator import DryRunResult
+from executor.state_diff import BalanceDelta, StatePrediction
 
 
 def test_gatekeeper_allows_valid_simulation():
@@ -58,7 +60,6 @@ def test_gatekeeper_blocks_reverting_simulation():
     assert "Execution blocked" in verdict.reason
     assert "ERC20: transfer amount exceeds balance" in verdict.reason
 
-    # enforce_execution_gate MUST raise ExecutionBlockedError
     with pytest.raises(ExecutionBlockedError) as exc_info:
         gate.enforce_execution_gate(reverting_res)
     assert "Execution blocked" in str(exc_info.value)
@@ -81,3 +82,203 @@ def test_gatekeeper_blocks_zero_gas_valid_status():
     assert verdict.action_allowed is False
     assert verdict.status == "BLOCKED"
     assert "Invalid gas estimate" in verdict.reason
+
+
+def test_gatekeeper_blocks_negative_balance_deficit():
+    """Regression: Sender spending more than available balance must be BLOCKED."""
+    gate = ExecutionGatekeeper()
+    underflow_delta = BalanceDelta(
+        entity="Sender",
+        address="0x1111111111111111111111111111111111111111",
+        asset_symbol="PHRS",
+        asset_type="NATIVE",
+        decimals=18,
+        before=10 * 10**18,
+        after=-(90 * 10**18),  # Negative deficit after 100 PHRS spend
+        delta=-(100 * 10**18),
+        unit="PHRS",
+    )
+    pred = StatePrediction(
+        tx_type="NATIVE_TRANSFER",
+        summary="Deficit transfer",
+        deltas=[underflow_delta],
+    )
+    res = DryRunResult(
+        success=True,
+        status="SIMULATED_SUCCESS",
+        decision="GO",
+        tx_params={},
+        gas_estimate=21000,
+        gas_price_gwei=10.0,
+        gas_cost_phrs=0.00021,
+        gas_cost_usd=0.000525,
+        state_prediction=pred,
+    )
+
+    verdict = gate.evaluate(res)
+    assert verdict.action_allowed is False
+    assert verdict.status == "BLOCKED"
+    assert "would underflow" in verdict.reason
+
+
+def test_gatekeeper_blocks_value_plus_gas_greater_than_balance():
+    """Regression: Value alone fits, but value + gas exceeds available balance."""
+    gate = ExecutionGatekeeper()
+    gas_cost = 21000 * 10 * 10**9
+    balance = 1 * 10**18
+    # value is exactly 1 PHRS, so value + gas causes deficit
+    underflow_delta = BalanceDelta(
+        entity="Sender",
+        address="0x1111111111111111111111111111111111111111",
+        asset_symbol="PHRS",
+        asset_type="NATIVE",
+        decimals=18,
+        before=balance,
+        after=-gas_cost,
+        delta=-(balance + gas_cost),
+        unit="PHRS",
+    )
+    pred = StatePrediction(
+        tx_type="NATIVE_TRANSFER",
+        summary="Exact value plus fee underflow",
+        deltas=[underflow_delta],
+    )
+    res = DryRunResult(
+        success=True,
+        status="SIMULATED_SUCCESS",
+        decision="GO",
+        tx_params={},
+        gas_estimate=21000,
+        gas_price_gwei=10.0,
+        gas_cost_phrs=0.00021,
+        gas_cost_usd=0.000525,
+        state_prediction=pred,
+    )
+
+    verdict = gate.evaluate(res)
+    assert verdict.action_allowed is False
+    assert verdict.status == "BLOCKED"
+    assert "would underflow" in verdict.reason
+
+
+def test_gatekeeper_exact_balance_boundary():
+    """Regression: Exact boundary where balance covers value + gas exactly (after == 0)."""
+    gate = ExecutionGatekeeper()
+    gas_cost = 21000 * 10 * 10**9
+    value = 1 * 10**18
+    exact_delta = BalanceDelta(
+        entity="Sender",
+        address="0x1111111111111111111111111111111111111111",
+        asset_symbol="PHRS",
+        asset_type="NATIVE",
+        decimals=18,
+        before=value + gas_cost,
+        after=0,
+        delta=-(value + gas_cost),
+        unit="PHRS",
+    )
+    pred = StatePrediction(
+        tx_type="NATIVE_TRANSFER",
+        summary="Exact balance spend",
+        deltas=[exact_delta],
+    )
+    res = DryRunResult(
+        success=True,
+        status="SIMULATED_SUCCESS",
+        decision="GO",
+        tx_params={},
+        gas_estimate=21000,
+        gas_price_gwei=10.0,
+        gas_cost_phrs=0.00021,
+        gas_cost_usd=0.000525,
+        state_prediction=pred,
+    )
+
+    verdict = gate.evaluate(res)
+    assert verdict.action_allowed is True
+    assert verdict.status == "ALLOWED"
+
+
+def test_gatekeeper_blocks_missing_sender_balance():
+    """Regression: Missing sender balance must fail closed."""
+    gate = ExecutionGatekeeper()
+    missing_delta = BalanceDelta(
+        entity="Sender",
+        address="0x1111111111111111111111111111111111111111",
+        asset_symbol="PHRS",
+        asset_type="NATIVE",
+        decimals=18,
+        before=None,
+        after=None,
+        delta=-1000,
+        unit="PHRS",
+    )
+    pred = StatePrediction(
+        tx_type="NATIVE_TRANSFER",
+        summary="Missing balance",
+        deltas=[missing_delta],
+    )
+    res = DryRunResult(
+        success=True,
+        status="SIMULATED_SUCCESS",
+        decision="GO",
+        tx_params={},
+        gas_estimate=21000,
+        gas_price_gwei=10.0,
+        gas_cost_phrs=0.00021,
+        gas_cost_usd=0.000525,
+        state_prediction=pred,
+    )
+
+    verdict = gate.evaluate(res)
+    assert verdict.action_allowed is False
+    assert verdict.status == "BLOCKED"
+    assert "unavailable" in verdict.reason.lower()
+
+
+def test_gatekeeper_blocks_missing_or_failed_gas_price():
+    """Regression: Missing or 0 gas price must fail closed."""
+    gate = ExecutionGatekeeper()
+    res = DryRunResult(
+        success=True,
+        status="SIMULATED_SUCCESS",
+        decision="GO",
+        tx_params={},
+        gas_estimate=21000,
+        gas_price_gwei=0.0,  # 0 or missing gas price
+        gas_cost_phrs=0.0,
+        gas_cost_usd=0.0,
+    )
+
+    verdict = gate.evaluate(res)
+    assert verdict.action_allowed is False
+    assert verdict.status == "BLOCKED"
+    assert "gas price" in verdict.reason.lower()
+
+
+def test_gatekeeper_blocks_malformed_calldata():
+    """Regression: Calldata integrity failure must fail closed."""
+    gate = ExecutionGatekeeper()
+    pred = StatePrediction(
+        tx_type="MALFORMED_CALLDATA",
+        summary="Rejected truncated ERC-20 transfer calldata",
+        deltas=[],
+        is_malformed=True,
+        validation_error="Truncated calldata (72 hex chars, expected 136)",
+    )
+    res = DryRunResult(
+        success=True,
+        status="SIMULATED_SUCCESS",
+        decision="GO",
+        tx_params={},
+        gas_estimate=21000,
+        gas_price_gwei=10.0,
+        gas_cost_phrs=0.00021,
+        gas_cost_usd=0.000525,
+        state_prediction=pred,
+    )
+
+    verdict = gate.evaluate(res)
+    assert verdict.action_allowed is False
+    assert verdict.status == "BLOCKED"
+    assert "calldata" in verdict.reason.lower()

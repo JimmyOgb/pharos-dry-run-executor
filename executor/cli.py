@@ -58,7 +58,7 @@ def format_cli_output(result_dict: Dict[str, Any], gate_dict: Dict[str, Any]) ->
     lines.append(f"  Gas Limit Estimate: {result_dict.get('gas_estimate', 0):,} units")
     lines.append(f"  Network Gas Price : {result_dict.get('gas_price_gwei', 0.0):.4f} Gwei")
     lines.append(f"  Est. Gas Cost PHRS: {result_dict.get('gas_cost_phrs', '0.0')} PHRS")
-    lines.append(f"  Est. Gas Cost USD : ${result_dict.get('gas_cost_usd', 0.0):.6f}")
+    lines.append(f"  Est. Gas Cost USD : ${result_dict.get('gas_cost_usd', 0.0):.6f} (illustrative assumption @ $2.50/PHRS)")
 
     if result_dict.get("revert_info"):
         lines.append("-" * 65)
@@ -77,8 +77,9 @@ def format_cli_output(result_dict: Dict[str, Any], gate_dict: Dict[str, Any]) ->
         lines.append(f"Predicted State Outcome: {sp.get('summary')}")
         lines.append("Account Balance Deltas:")
         for d in sp.get("deltas", []):
+            obs_label = " [OBSERVED]" if d.get("is_observed") else " [PREDICTED]"
             lines.append(
-                f"  [{d['entity']}] {d['address'][:10]}... | {d['asset_symbol']} ({d['asset_type']}): "
+                f"  [{d['entity']}{obs_label}] {d['address'][:10]}... | {d['asset_symbol']} ({d['asset_type']}): "
                 f"{d['before_formatted']} -> {d['after_formatted']} (delta: {d['delta_formatted']} {d['unit']})"
             )
 

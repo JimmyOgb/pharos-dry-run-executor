@@ -121,6 +121,29 @@ class PharosClient:
                 raise PharosClientError(f"Connection failure to {self.rpc_url}: {e}") from e
 
     # Convenience on-chain query methods
+    def eth_chain_id(self) -> int:
+        """Fetch chain ID from the RPC endpoint."""
+        res = self.rpc_call("eth_chainId", [])
+        return int(res, 16) if isinstance(res, str) else int(res)
+
+    def verify_network(self, expected_chain_id: Optional[int] = None) -> int:
+        """
+        Verify that the RPC endpoint chain ID matches expected network (Pharos Atlantic: 688689).
+        Fails closed on mismatch, missing result, or communication error.
+        """
+        expected = expected_chain_id if expected_chain_id is not None else self.chain_id
+        try:
+            actual_id = self.eth_chain_id()
+        except Exception as e:
+            raise PharosClientError(f"Failed to query eth_chainId from {self.rpc_url}: {e}") from e
+
+        if actual_id != expected:
+            raise PharosClientError(
+                f"Network verification failed: RPC endpoint {self.rpc_url} returned "
+                f"chain ID {actual_id}, expected {expected} (Pharos Atlantic Testnet)"
+            )
+        return actual_id
+
     def eth_call(self, tx_dict: Dict[str, Any], block: str = "latest") -> str:
         """Execute read-only contract call without broadcasting."""
         return self.rpc_call("eth_call", [tx_dict, block])

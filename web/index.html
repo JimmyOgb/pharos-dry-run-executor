@@ -26,6 +26,9 @@
     .glow-green {
       box-shadow: 0 0 25px rgba(16, 185, 129, 0.2);
     }
+    .glow-amber {
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.2);
+    }
   </style>
 </head>
 <body class="min-h-screen bg-[#07090E] p-4 md:p-8">
@@ -59,7 +62,7 @@
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
             <span class="text-xs font-mono text-slate-300">Atlantic RPC Online</span>
           </div>
-          <span class="text-xs font-mono text-slate-500">Chain ID: 688689 | Gas: 10.0 Gwei</span>
+          <span class="text-xs font-mono text-slate-500">Chain ID: 688689 | Gas: Live</span>
           <span class="text-xs font-mono text-cyan-400/80">Builder: JimmyOgb</span>
         </div>
       </div>
@@ -68,10 +71,15 @@
     <!-- Preset Scenario Selector -->
     <section class="border border-slate-800 bg-[#0C101A] rounded-2xl p-6">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-semibold tracking-wider uppercase text-slate-400">
-          Preset Verification Scenarios
-        </h2>
-        <span class="text-xs text-slate-500 font-mono">Select a scenario to populate simulation fixtures</span>
+        <div>
+          <h2 class="text-sm font-semibold tracking-wider uppercase text-slate-400">
+            Preset Verification Scenarios
+          </h2>
+          <p class="text-[11px] text-amber-400/80 font-mono mt-0.5">
+            Notice: Preset buttons load illustrative demonstration fixtures. Editing any input switches to Custom Transaction mode.
+          </p>
+        </div>
+        <span class="text-xs text-slate-500 font-mono hidden md:inline">Select scenario to populate</span>
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -132,7 +140,7 @@
       <div class="lg:col-span-5 border border-slate-800 bg-[#0C101A] rounded-2xl p-6 space-y-4">
         <h2 class="text-sm font-semibold tracking-wider uppercase text-slate-400 flex items-center justify-between">
           <span>Transaction Parameters</span>
-          <span id="active-scenario-badge" class="text-[11px] text-cyan-400 font-mono">Custom Input</span>
+          <span id="active-scenario-badge" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono">Custom Input</span>
         </h2>
 
         <div class="space-y-3">
@@ -154,8 +162,8 @@
             <div>
               <label class="block text-xs font-mono text-slate-400 mb-1">Execution Mode</label>
               <select id="select-mode" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500">
+                <option value="live">Live Atlantic Testnet RPC (688689)</option>
                 <option value="sandbox">Sandbox (Calibrated)</option>
-                <option value="live">Live Atlantic Testnet RPC</option>
               </select>
             </div>
           </div>
@@ -172,7 +180,7 @@
         </button>
 
         <div class="text-[11px] text-slate-500 font-mono text-center">
-          Enforces Criterion 01 &amp; 04: Zero raw transactions broadcast.
+          Enforces Criteria 01 &amp; 04: Zero raw transactions broadcast. Fail-closed safety gate.
         </div>
       </div>
 
@@ -187,22 +195,25 @@
                 &#10003;
               </span>
               <div>
-                <div class="text-xs font-mono uppercase tracking-widest text-emerald-400" id="verdict-eyebrow">
-                  Fail-Closed Gatekeeper Verdict
+                <div class="text-xs font-mono uppercase tracking-widest text-emerald-400 flex items-center gap-2" id="verdict-eyebrow">
+                  <span>Fail-Closed Gatekeeper</span>
+                  <span id="provenance-badge" class="px-2 py-0.5 text-[10px] rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono">
+                    LIVE SIMULATION
+                  </span>
                 </div>
-                <div class="text-xl font-bold text-white" id="verdict-title">
+                <div class="text-xl font-bold text-white mt-0.5" id="verdict-title">
                   [ GO ] SAFE TO BROADCAST
                 </div>
               </div>
             </div>
             <div class="text-right">
-              <span id="verdict-badge" class="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              <span id="verdict-badge" class="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono">
                 ALLOWED
               </span>
             </div>
           </div>
           <p id="verdict-reason" class="text-xs text-slate-300 mt-3 pt-3 border-t border-slate-800 font-mono">
-            GATE PASSED: Pre-flight simulation and post-state invariants verified.
+            GATE PASSED: Pre-flight simulation, network identity, and post-state invariants verified.
           </p>
         </div>
 
@@ -229,7 +240,7 @@
           <div class="border border-slate-800 bg-[#0C101A] rounded-xl p-3">
             <div class="text-[10px] font-mono text-slate-500 uppercase">Gas Fee (USD)</div>
             <div class="text-lg font-bold text-emerald-400 font-mono mt-0.5" id="metric-cost-usd">$0.000525</div>
-            <div class="text-[10px] text-slate-500">@ $2.50 / PHRS</div>
+            <div class="text-[10px] text-slate-500" id="metric-cost-usd-note">@ $2.50 / PHRS (illustrative assumption)</div>
           </div>
         </div>
 
@@ -261,7 +272,7 @@
         <div class="border border-slate-800 bg-[#0C101A] rounded-2xl p-5">
           <div class="flex items-center justify-between mb-3">
             <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <span>Criterion 03 :: Predicted State Transitions</span>
+              <span>Criterion 03 :: Balance &amp; State Transitions</span>
               <span class="px-2 py-0.5 text-[10px] rounded bg-slate-800 text-slate-300 font-mono" id="state-summary-badge">NATIVE_TRANSFER</span>
             </div>
           </div>
@@ -308,7 +319,11 @@
   </div>
 
   <script>
-    // Embedded Scenarios Fixtures for 100% offline & Vercel static operation
+    const ATLANTIC_RPC_URL = "https://atlantic.dplabs-internal.com";
+    const ATLANTIC_CHAIN_ID_HEX = "0xa8231"; // 688689
+    const DEFAULT_USD_RATE = 2.50; // Illustrative fixed assumption
+
+    // Embedded Scenarios Fixtures labeled as illustrative demonstrations
     const FIXTURES = {
       valid_native_transfer: {
         id: "valid_native_transfer",
@@ -319,11 +334,12 @@
         success: true,
         gas: 21000,
         gwei: 10.0,
+        provenance: "FIXTURE / DEMO",
         tx_type: "NATIVE_TRANSFER",
-        summary: "Transfers 1.5000 PHRS from 0x111111... to 0x222222...",
+        summary: "Transfers 1.5000 PHRS from 0x111111... to 0x222222... (Illustrative Demonstration)",
         deltas: [
-          { entity: "Sender", address: "0x1111111111111111111111111111111111111111", asset: "PHRS (Native)", before: "10.000000", after: "8.499790", delta: "-1.500210 PHRS" },
-          { entity: "Recipient", address: "0x2222222222222222222222222222222222222222", asset: "PHRS (Native)", before: "0.500000", after: "2.000000", delta: "+1.500000 PHRS" }
+          { entity: "Sender [DEMO]", address: "0x1111111111111111111111111111111111111111", asset: "PHRS (Native)", before: "10.000000", after: "8.499790", delta: "-1.500210 PHRS" },
+          { entity: "Recipient [DEMO]", address: "0x2222222222222222222222222222222222222222", asset: "PHRS (Native)", before: "0.500000", after: "2.000000", delta: "+1.500000 PHRS" }
         ]
       },
       valid_erc20_approve: {
@@ -335,11 +351,12 @@
         success: true,
         gas: 45000,
         gwei: 10.0,
+        provenance: "FIXTURE / DEMO",
         tx_type: "ERC20_APPROVE",
-        summary: "Sets allowance of 1,000.0000 USDC for spender 0x000000... (Permit2 Canonical)",
+        summary: "Sets allowance of 1,000.0000 USDC for spender 0x000000... (Permit2 Canonical) (Illustrative Demonstration)",
         deltas: [
-          { entity: "Sender", address: "0x1111111111111111111111111111111111111111", asset: "PHRS (Gas)", before: "10.000000", after: "9.999550", delta: "-0.000450 PHRS" },
-          { entity: "Spender Allowance", address: "0x000000000022D473030F116dDEE9F6B43aC78BA3", asset: "USDC Allowance", before: "0.000000", after: "1000.000000", delta: "+1000.000000 USDC" }
+          { entity: "Sender [DEMO]", address: "0x1111111111111111111111111111111111111111", asset: "PHRS (Gas)", before: "10.000000", after: "9.999550", delta: "-0.000450 PHRS" },
+          { entity: "Spender Allowance [DEMO]", address: "0x000000000022D473030F116dDEE9F6B43aC78BA3", asset: "USDC Allowance", before: "0.000000", after: "1000.000000", delta: "+1000.000000 USDC" }
         ]
       },
       valid_erc20_transfer: {
@@ -351,12 +368,13 @@
         success: true,
         gas: 52000,
         gwei: 10.0,
+        provenance: "FIXTURE / DEMO",
         tx_type: "ERC20_TRANSFER",
-        summary: "Transfers 250.0000 USDC from 0x111111... to 0x222222...",
+        summary: "Transfers 250.0000 USDC from 0x111111... to 0x222222... (Illustrative Demonstration)",
         deltas: [
-          { entity: "Sender", address: "0x1111111111111111111111111111111111111111", asset: "PHRS (Gas)", before: "10.000000", after: "9.999480", delta: "-0.000520 PHRS" },
-          { entity: "Token Sender", address: "0x1111111111111111111111111111111111111111", asset: "USDC Balance", before: "5000.000000", after: "4750.000000", delta: "-250.000000 USDC" },
-          { entity: "Token Recipient", address: "0x2222222222222222222222222222222222222222", asset: "USDC Balance", before: "100.000000", after: "350.000000", delta: "+250.000000 USDC" }
+          { entity: "Sender [DEMO]", address: "0x1111111111111111111111111111111111111111", asset: "PHRS (Gas)", before: "10.000000", after: "9.999480", delta: "-0.000520 PHRS" },
+          { entity: "Token Sender [DEMO]", address: "0x1111111111111111111111111111111111111111", asset: "USDC Balance", before: "5000.000000", after: "4750.000000", delta: "-250.000000 USDC" },
+          { entity: "Token Recipient [DEMO]", address: "0x2222222222222222222222222222222222222222", asset: "USDC Balance", before: "100.000000", after: "350.000000", delta: "+250.000000 USDC" }
         ]
       },
       revert_insufficient_balance: {
@@ -366,6 +384,7 @@
         value: "0",
         data: "0xa9059cbb00000000000000000000000022222222222222222222222222222222222222220000000000000000000000000000000000000000000000000000000ba43b7400",
         success: false,
+        provenance: "FIXTURE / DEMO",
         revert: {
           type: "Error(string)",
           selector: "0x08c379a0",
@@ -379,6 +398,7 @@
         value: "0",
         data: "0x771602f7",
         success: false,
+        provenance: "FIXTURE / DEMO",
         revert: {
           type: "Panic(uint256)",
           selector: "0x4e487b71",
@@ -392,6 +412,7 @@
         value: "0",
         data: "0xd92e233d",
         success: false,
+        provenance: "FIXTURE / DEMO",
         revert: {
           type: "CustomError",
           selector: "0xd92e233d",
@@ -400,10 +421,24 @@
       }
     };
 
-    let currentScenario = "valid_native_transfer";
+    let selectedPresetId = null;
+
+    function handleInputModified() {
+      selectedPresetId = null;
+      document.querySelectorAll(".scenario-btn").forEach(b => {
+        b.classList.remove("border-cyan-500", "bg-slate-800");
+      });
+      document.getElementById("active-scenario-badge").innerText = "Custom Input";
+      document.getElementById("active-scenario-badge").className = "text-[11px] px-2 py-0.5 rounded bg-slate-800 text-cyan-400 font-mono";
+    }
+
+    ["input-from", "input-to", "input-value", "input-data", "select-mode"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", handleInputModified);
+    });
 
     function loadScenario(id) {
-      currentScenario = id;
+      selectedPresetId = id;
       const sc = FIXTURES[id];
       if (!sc) return;
 
@@ -417,9 +452,84 @@
       document.getElementById("input-to").value = sc.to;
       document.getElementById("input-value").value = sc.value;
       document.getElementById("input-data").value = sc.data;
-      document.getElementById("active-scenario-badge").innerText = id;
+      document.getElementById("select-mode").value = "sandbox";
+
+      const badge = document.getElementById("active-scenario-badge");
+      badge.innerText = `Preset: ${id}`;
+      badge.className = "text-[11px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono";
 
       runSimulation();
+    }
+
+    // Direct Browser JSON-RPC Helper
+    async function rpcCall(method, params = []) {
+      const resp = await fetch(ATLANTIC_RPC_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params })
+      });
+      if (!resp.ok) {
+        throw new Error(`RPC transport HTTP ${resp.status}`);
+      }
+      return await resp.json();
+    }
+
+    // EVM Revert Decoder in Browser
+    function decodeRevert(rawHex, rpcMsg) {
+      if (!rawHex && rpcMsg) {
+        const m = rpcMsg.match(/0x[0-9a-fA-F]{8,}/);
+        if (m) rawHex = m[0];
+      }
+      const clean = (rawHex || "").toLowerCase().replace(/^0x/, "");
+
+      // 1. Error(string): 0x08c379a0
+      if (clean.startsWith("08c379a0") && clean.length >= 136) {
+        try {
+          const lenHex = clean.slice(72, 136);
+          const strLen = parseInt(lenHex, 16);
+          const strBytes = clean.slice(136, 136 + strLen * 2);
+          let str = "";
+          for (let i = 0; i < strBytes.length; i += 2) {
+            str += String.fromCharCode(parseInt(strBytes.substr(i, 2), 16));
+          }
+          return { type: "Error(string)", selector: "0x08c379a0", reason: str || "Contract reverted without text" };
+        } catch (e) {}
+      }
+
+      // 2. Panic(uint256): 0x4e487b71
+      if (clean.startsWith("4e487b71") && clean.length >= 72) {
+        const code = parseInt(clean.slice(8, 72), 16);
+        const panics = {
+          0x01: "Assert evaluated to false",
+          0x11: "Arithmetic operation overflowed or underflowed (Panic 0x11)",
+          0x12: "Division or modulo by zero (Panic 0x12)",
+          0x21: "Conversion into out-of-bounds enum",
+          0x32: "Array index out of bounds"
+        };
+        return {
+          type: "Panic(uint256)",
+          selector: "0x4e487b71",
+          reason: panics[code] || `Panic code 0x${code.toString(16)}`
+        };
+      }
+
+      // 3. Known custom errors
+      const selector = "0x" + clean.slice(0, 8);
+      const customErrors = {
+        "0xd92e233d": "ZeroAddress()",
+        "0x80ac58cd": "InsufficientFunds()",
+        "0x550a2b97": "Unauthorized()"
+      };
+      if (customErrors[selector]) {
+        return { type: "CustomError", selector, reason: `Custom error [${selector}]: ${customErrors[selector]}` };
+      }
+
+      if (rpcMsg) {
+        const cleanMsg = rpcMsg.replace(/execution reverted:?/i, "").trim();
+        return { type: "RPC Revert", selector: selector.length === 10 ? selector : null, reason: cleanMsg || rpcMsg };
+      }
+
+      return { type: "Unknown", selector: selector.length === 10 ? selector : null, reason: "Transaction simulation reverted" };
     }
 
     async function runSimulation() {
@@ -429,51 +539,267 @@
       const value = document.getElementById("input-value").value.trim();
       const data = document.getElementById("input-data").value.trim();
 
-      // Check if server API is accessible
-      let result = null;
-      try {
-        const resp = await fetch("/api/simulate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from, to, value, data, mode })
-        });
-        if (resp.ok) {
-          result = await resp.json();
+      // Case 1: Preset Fixture Demonstration (explicitly labeled)
+      if (selectedPresetId && mode === "sandbox") {
+        const fix = FIXTURES[selectedPresetId];
+        if (fix && fix.data.toLowerCase() === data.toLowerCase() && fix.to.toLowerCase() === to.toLowerCase()) {
+          renderResults(fix);
+          return;
         }
-      } catch (e) {
-        // Fallback to client-side fixture matching
       }
 
-      if (!result) {
-        result = computeClientSideSimulation(from, to, value, data);
+      // Case 2: Live Atlantic Testnet RPC Simulation
+      if (mode === "live") {
+        renderLoading();
+        try {
+          // 1. Verify network identity
+          const chainIdRes = await rpcCall("eth_chainId");
+          if (!chainIdRes.result || chainIdRes.result.toLowerCase() !== ATLANTIC_CHAIN_ID_HEX) {
+            renderResults({
+              success: false,
+              provenance: "UNVERIFIED",
+              status: "NETWORK_MISMATCH",
+              revert: { reason: `RPC endpoint chain ID (${chainIdRes.result}) mismatch. Expected Pharos Atlantic Testnet (688689).` }
+            });
+            return;
+          }
+
+          // 2. Query gas price
+          const gasPriceRes = await rpcCall("eth_gasPrice");
+          if (!gasPriceRes.result) {
+            renderResults({
+              success: false,
+              provenance: "UNVERIFIED",
+              status: "GAS_PRICE_UNAVAILABLE",
+              revert: { reason: "Unable to retrieve network gas price from Atlantic RPC." }
+            });
+            return;
+          }
+          const gasPriceWei = BigInt(gasPriceRes.result);
+          const gasPriceGwei = Number(gasPriceWei) / 1e9;
+
+          // 3. Query latest block
+          const blockRes = await rpcCall("eth_blockNumber");
+          const blockNumber = blockRes.result ? parseInt(blockRes.result, 16) : null;
+
+          // 4. Validate Calldata length for ERC-20
+          const cleanHex = data.replace(/^0x/i, "");
+          if (cleanHex.length > 0) {
+            if (!/^[0-9a-fA-F]*$/.test(cleanHex)) {
+              renderResults({
+                success: false,
+                provenance: "BLOCKED",
+                revert: { reason: "Malformed transaction: calldata contains non-hexadecimal characters." }
+              });
+              return;
+            }
+            if (cleanHex.length % 2 !== 0) {
+              renderResults({
+                success: false,
+                provenance: "BLOCKED",
+                revert: { reason: "Malformed transaction: odd-length hexadecimal calldata." }
+              });
+              return;
+            }
+            if (cleanHex.startsWith("a9059cbb") || cleanHex.startsWith("095ea7b3")) {
+              if (cleanHex.length < 136) {
+                renderResults({
+                  success: false,
+                  provenance: "BLOCKED",
+                  revert: { reason: `Truncated ERC-20 calldata: length is ${cleanHex.length} hex chars, expected 136 hex chars.` }
+                });
+                return;
+              }
+              if (cleanHex.length > 136) {
+                renderResults({
+                  success: false,
+                  provenance: "BLOCKED",
+                  revert: { reason: `Rejected unexpected trailing calldata: length is ${cleanHex.length} hex chars, expected 136.` }
+                });
+                return;
+              }
+            }
+          }
+
+          const txObj = {
+            from: from || "0x0000000000000000000000000000000000000000",
+            to: to || "0x0000000000000000000000000000000000000000",
+            value: "0x" + BigInt(value || 0).toString(16),
+            data: data || "0x"
+          };
+
+          // 5. Query sender balance
+          let senderBalanceWei = BigInt(0);
+          try {
+            const balRes = await rpcCall("eth_getBalance", [txObj.from, "latest"]);
+            if (balRes.result) senderBalanceWei = BigInt(balRes.result);
+          } catch (e) {}
+
+          // 6. Simulate via eth_call
+          const callRes = await rpcCall("eth_call", [txObj, "latest"]);
+          if (callRes.error) {
+            const dec = decodeRevert(callRes.error.data, callRes.error.message);
+            renderResults({
+              success: false,
+              provenance: "LIVE SIMULATION",
+              blockNumber,
+              revert: dec
+            });
+            return;
+          }
+
+          // 7. Estimate gas
+          const gasRes = await rpcCall("eth_estimateGas", [txObj]);
+          if (gasRes.error) {
+            const dec = decodeRevert(gasRes.error.data, gasRes.error.message);
+            renderResults({
+              success: false,
+              provenance: "LIVE SIMULATION",
+              blockNumber,
+              revert: dec
+            });
+            return;
+          }
+          const gasLimit = parseInt(gasRes.result, 16);
+
+          // 8. Solvency check
+          const valWei = BigInt(value || 0);
+          const gasCostWei = BigInt(gasLimit) * gasPriceWei;
+          const totalRequired = valWei + gasCostWei;
+
+          if (senderBalanceWei < totalRequired) {
+            renderResults({
+              success: false,
+              provenance: "BLOCKED",
+              blockNumber,
+              revert: {
+                reason: `CRITICAL GATE: Insufficient native balance. Sender has ${(Number(senderBalanceWei)/1e18).toFixed(6)} PHRS, required ${(Number(totalRequired)/1e18).toFixed(6)} PHRS (value + gas fee).`
+              }
+            });
+            return;
+          }
+
+          // 9. Simulation passed on live Atlantic Testnet!
+          const costPhrs = Number(gasCostWei) / 1e18;
+          const senderAfter = Number(senderBalanceWei - totalRequired) / 1e18;
+          const senderBefore = Number(senderBalanceWei) / 1e18;
+
+          renderResults({
+            success: true,
+            provenance: "LIVE SIMULATION",
+            gas: gasLimit,
+            gwei: gasPriceGwei,
+            blockNumber,
+            tx_type: cleanHex.startsWith("a9059cbb") ? "ERC20_TRANSFER" : (cleanHex.startsWith("095ea7b3") ? "ERC20_APPROVE" : (cleanHex.length === 0 ? "NATIVE_TRANSFER" : "CONTRACT_CALL")),
+            summary: `Live Atlantic simulation succeeded at block #${blockNumber}. Pre-flight and post-state invariants verified.`,
+            deltas: [
+              {
+                entity: "Sender [OBSERVED]",
+                address: from,
+                asset: "PHRS (Native)",
+                before: senderBefore.toFixed(6),
+                after: senderAfter.toFixed(6),
+                delta: `-${(Number(totalRequired)/1e18).toFixed(6)} PHRS`
+              }
+            ]
+          });
+          return;
+
+        } catch (rpcErr) {
+          // STRICT FAIL-CLOSED: Network or CORS failure CANNOT default to GO!
+          renderResults({
+            success: false,
+            provenance: "UNVERIFIED",
+            status: "RPC_UNAVAILABLE",
+            revert: { reason: `Fail-closed gate: Unable to reach Atlantic RPC (${rpcErr.message}). Simulation cannot be verified.` }
+          });
+          return;
+        }
       }
 
-      renderResults(result);
-    }
-
-    function computeClientSideSimulation(from, to, value, data) {
-      const match = FIXTURES[currentScenario];
-      if (match && match.data.toLowerCase() === data.toLowerCase()) {
-        return match;
+      // Case 3: Offline Sandbox Custom Simulation
+      // Validate calldata integrity
+      const cleanData = data.replace(/^0x/i, "");
+      if (cleanData.length > 0 && (!/^[0-9a-fA-F]*$/.test(cleanData) || cleanData.length % 2 !== 0)) {
+        renderResults({
+          success: false,
+          provenance: "BLOCKED",
+          revert: { reason: "Malformed calldata: invalid hexadecimal characters or odd length." }
+        });
+        return;
+      }
+      if (cleanData.startsWith("a9059cbb") || cleanData.startsWith("095ea7b3")) {
+        if (cleanData.length !== 136) {
+          renderResults({
+            success: false,
+            provenance: "BLOCKED",
+            revert: { reason: `Rejected malformed ERC-20 calldata: length is ${cleanData.length} chars, expected 136.` }
+          });
+          return;
+        }
       }
 
-      // Basic client-side calculation
+      // Check for known revert selectors
+      if (cleanData.startsWith("08c379a0") || cleanData.startsWith("4e487b71") || cleanData.startsWith("d92e233d")) {
+        renderResults({
+          success: false,
+          provenance: "BLOCKED",
+          revert: decodeRevert(data, "Custom sandbox test revert")
+        });
+        return;
+      }
+
+      // Solvency check in sandbox (default assumed balance 10 PHRS)
       const valWei = BigInt(value || 0);
-      const isRevert = data.startsWith("0x08c379a0") || data.startsWith("0x4e487b71") || data.startsWith("0xd92e233d");
-      if (isRevert) {
-        return FIXTURES.revert_insufficient_balance;
+      const assumedBalance = BigInt("10000000000000000000"); // 10 PHRS
+      const estGasWei = BigInt(21000) * BigInt(10000000000); // 21000 * 10 Gwei
+      if (valWei + estGasWei > assumedBalance) {
+        renderResults({
+          success: false,
+          provenance: "BLOCKED",
+          revert: {
+            reason: `CRITICAL GATE: Invariant deficit. Account ${from.slice(0,10)}... would underflow (value + gas exceeds available balance).`
+          }
+        });
+        return;
       }
 
-      return {
+      // Safe sandbox outcome
+      const deltaPhrs = Number(valWei + estGasWei) / 1e18;
+      renderResults({
         success: true,
+        provenance: "SANDBOX PREDICTION",
         gas: 21000,
         gwei: 10.0,
         tx_type: "CUSTOM_TRANSACTION",
-        summary: `Custom transaction from ${from.slice(0,8)}... to ${to.slice(0,8)}...`,
+        summary: `Offline sandbox prediction from ${from.slice(0,8)}... to ${to.slice(0,8)}...`,
         deltas: [
-          { entity: "Sender", address: from, asset: "PHRS (Native)", before: "10.000000", after: "8.499790", delta: "-1.500210 PHRS" }
+          {
+            entity: "Sender [SANDBOX]",
+            address: from,
+            asset: "PHRS (Native)",
+            before: "10.000000",
+            after: (10.0 - deltaPhrs).toFixed(6),
+            delta: `-${deltaPhrs.toFixed(6)} PHRS`
+          }
         ]
-      };
+      });
+    }
+
+    function renderLoading() {
+      const banner = document.getElementById("verdict-banner");
+      const icon = document.getElementById("verdict-icon");
+      const title = document.getElementById("verdict-title");
+      const badge = document.getElementById("verdict-badge");
+      const reason = document.getElementById("verdict-reason");
+
+      banner.className = "border rounded-2xl p-6 transition-all duration-300 bg-slate-900/40 border-cyan-500/40 glow-cyan";
+      icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-cyan-500/20 text-cyan-400 text-lg font-bold animate-spin";
+      icon.innerHTML = "&#9696;";
+      title.innerText = "[ SIMULATING ] QUERYING ATLANTIC RPC...";
+      badge.className = "px-3 py-1 text-xs font-bold rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono";
+      badge.innerText = "QUERYING";
+      reason.innerText = "Evaluating eth_chainId, eth_call, and eth_estimateGas over read-only JSON-RPC...";
     }
 
     function renderResults(res) {
@@ -482,28 +808,49 @@
       const title = document.getElementById("verdict-title");
       const badge = document.getElementById("verdict-badge");
       const reason = document.getElementById("verdict-reason");
+      const provBadge = document.getElementById("provenance-badge");
       const revertPanel = document.getElementById("revert-panel");
       const tbody = document.getElementById("state-table-body");
+
+      const provenance = res.provenance || (res.success ? "LIVE SIMULATION" : "BLOCKED");
+      provBadge.innerText = provenance;
+
+      if (provenance === "LIVE SIMULATION") {
+        provBadge.className = "px-2 py-0.5 text-[10px] rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono";
+      } else if (provenance === "FIXTURE / DEMO") {
+        provBadge.className = "px-2 py-0.5 text-[10px] rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 font-mono";
+      } else if (provenance === "UNVERIFIED") {
+        provBadge.className = "px-2 py-0.5 text-[10px] rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono";
+      } else {
+        provBadge.className = "px-2 py-0.5 text-[10px] rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono";
+      }
 
       if (res.success) {
         banner.className = "border rounded-2xl p-6 transition-all duration-300 bg-emerald-950/20 border-emerald-500/40 glow-green";
         icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-emerald-500/20 text-emerald-400 text-lg font-bold";
         icon.innerHTML = "&#10003;";
         title.innerText = "[ GO ] SAFE TO BROADCAST";
-        badge.className = "px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+        badge.className = "px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono";
         badge.innerText = "ALLOWED";
-        reason.innerText = "GATE PASSED: Pre-flight simulation and post-state invariants verified.";
+        reason.innerText = provenance === "FIXTURE / DEMO"
+          ? "PRESET DEMONSTRATION: Valid fixture verified against calibrated test parameters."
+          : `GATE PASSED: Pre-flight simulation, network identity (688689), and post-state invariants verified.`;
 
         revertPanel.classList.add("hidden");
 
-        document.getElementById("metric-gas").innerText = (res.gas || 21000).toLocaleString();
-        document.getElementById("metric-gwei").innerText = (res.gwei || 10.0).toFixed(2);
-        const costPhrs = (res.gas || 21000) * (res.gwei || 10.0) * 1e-9;
+        const gas = res.gas || 21000;
+        const gwei = res.gwei || 10.0;
+        const costPhrs = gas * gwei * 1e-9;
+        const costUsd = costPhrs * DEFAULT_USD_RATE;
+
+        document.getElementById("metric-gas").innerText = gas.toLocaleString();
+        document.getElementById("metric-gwei").innerText = gwei.toFixed(2);
         document.getElementById("metric-cost-phrs").innerText = costPhrs.toFixed(6);
-        document.getElementById("metric-cost-usd").innerText = "$" + (costPhrs * 2.5).toFixed(6);
+        document.getElementById("metric-cost-usd").innerText = "$" + costUsd.toFixed(6);
+        document.getElementById("metric-cost-usd-note").innerText = `@ $${DEFAULT_USD_RATE.toFixed(2)} / PHRS (illustrative assumption)`;
 
         document.getElementById("state-summary-badge").innerText = res.tx_type || "NATIVE_TRANSFER";
-        document.getElementById("state-summary-text").innerText = res.summary || "Transaction executed.";
+        document.getElementById("state-summary-text").innerText = res.summary || "Transaction simulated successfully.";
 
         tbody.innerHTML = (res.deltas || []).map(d => `
           <tr class="hover:bg-slate-900/40 transition">
@@ -516,34 +863,45 @@
         `).join("");
 
       } else {
-        banner.className = "border rounded-2xl p-6 transition-all duration-300 bg-rose-950/20 border-rose-500/40 glow-red";
-        icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400 text-lg font-bold";
-        icon.innerHTML = "&#10007;";
-        title.innerText = "[ NO-GO ] EXECUTION BLOCKED";
-        badge.className = "px-3 py-1 text-xs font-bold rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40";
+        const isUnverified = provenance === "UNVERIFIED";
+        banner.className = isUnverified
+          ? "border rounded-2xl p-6 transition-all duration-300 bg-amber-950/20 border-amber-500/40 glow-amber"
+          : "border rounded-2xl p-6 transition-all duration-300 bg-rose-950/20 border-rose-500/40 glow-red";
+
+        icon.className = isUnverified
+          ? "w-10 h-10 rounded-full flex items-center justify-center bg-amber-500/20 text-amber-400 text-lg font-bold"
+          : "w-10 h-10 rounded-full flex items-center justify-center bg-rose-500/20 text-rose-400 text-lg font-bold";
+        icon.innerHTML = isUnverified ? "!" : "&#10007;";
+
+        title.innerText = isUnverified ? "[ UNVERIFIED ] EXECUTION BLOCKED" : "[ NO-GO ] EXECUTION BLOCKED";
+        badge.className = isUnverified
+          ? "px-3 py-1 text-xs font-bold rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono"
+          : "px-3 py-1 text-xs font-bold rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono";
         badge.innerText = "BLOCKED";
 
         const rev = res.revert || { reason: "Transaction simulation reverted" };
-        reason.innerText = `CRITICAL GATE: Execution blocked. Simulation reverted: ${rev.reason}`;
+        reason.innerText = rev.reason.startsWith("CRITICAL GATE")
+          ? rev.reason
+          : `CRITICAL GATE: Execution blocked. Simulation failed: ${rev.reason}`;
 
         revertPanel.classList.remove("hidden");
-        document.getElementById("revert-type").innerText = rev.type || "Error(string)";
-        document.getElementById("revert-selector").innerText = rev.selector || "0x08c379a0";
+        document.getElementById("revert-type").innerText = rev.type || "FailClosedGate";
+        document.getElementById("revert-selector").innerText = rev.selector || "N/A";
         document.getElementById("revert-reason").innerText = rev.reason;
 
         document.getElementById("metric-gas").innerText = "0";
         document.getElementById("metric-cost-phrs").innerText = "0.000000";
         document.getElementById("metric-cost-usd").innerText = "$0.000000";
 
-        document.getElementById("state-summary-badge").innerText = "SIMULATION_REVERTED";
-        document.getElementById("state-summary-text").innerText = "Transaction failed pre-flight. Zero state transitions committed.";
-        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-rose-400/80 italic">No state changes committed due to execution revert.</td></tr>`;
+        document.getElementById("state-summary-badge").innerText = res.status || "SIMULATION_BLOCKED";
+        document.getElementById("state-summary-text").innerText = "Transaction failed pre-flight verification. Zero state committed.";
+        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-rose-400/80 italic">No state changes committed due to execution block.</td></tr>`;
       }
 
       document.getElementById("json-viewer").innerText = JSON.stringify(res, null, 2);
     }
 
-    // Initialize on load
+    // Initialize on load with valid preset demonstration
     window.addEventListener("DOMContentLoaded", () => {
       loadScenario("valid_native_transfer");
     });

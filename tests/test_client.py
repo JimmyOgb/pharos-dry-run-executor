@@ -1,5 +1,6 @@
 """
 Unit Tests: Pharos Transport Client & MCP Interface
+Includes network identity verification (Chain ID 688689).
 """
 
 import json
@@ -68,3 +69,44 @@ def test_convenience_methods(mock_urlopen):
     # eth_estimateGas
     mock_resp.read.return_value = json.dumps({"jsonrpc": "2.0", "id": 1, "result": "0x5208"}).encode("utf-8") # 21000
     assert client.eth_estimate_gas({"from": "0x1", "to": "0x2"}) == 21000
+
+    # eth_chainId
+    mock_resp.read.return_value = json.dumps({"jsonrpc": "2.0", "id": 1, "result": "0xa8231"}).encode("utf-8") # 688689
+    assert client.eth_chain_id() == 688689
+
+
+@patch("urllib.request.urlopen")
+def test_verify_network_success(mock_urlopen):
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps({"jsonrpc": "2.0", "id": 1, "result": "0xa8231"}).encode("utf-8")
+    mock_urlopen.return_value.__enter__.return_value = mock_resp
+
+    client = PharosClient(chain_id=688689)
+    verified_id = client.verify_network()
+    assert verified_id == 688689
+
+
+@patch("urllib.request.urlopen")
+def test_verify_network_mismatch_fails_closed(mock_urlopen):
+    mock_resp = MagicMock()
+    # Mocking Ethereum Mainnet (chain ID 1) instead of Atlantic (688689)
+    mock_resp.read.return_value = json.dumps({"jsonrpc": "2.0", "id": 1, "result": "0x1"}).encode("utf-8")
+    mock_urlopen.return_value.__enter__.return_value = mock_resp
+
+    client = PharosClient(chain_id=688689)
+    with pytest.raises(PharosClientError) as exc_info:
+        client.verify_network()
+    assert "Network verification failed" in str(exc_info.value)
+    assert "expected 688689" in str(exc_info.value)
+
+
+@patch("urllib.request.urlopen")
+def test_verify_network_transport_failure(mock_urlopen):
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps({"jsonrpc": "2.0", "id": 1, "error": {"message": "Network timeout"}}).encode("utf-8")
+    mock_urlopen.return_value.__enter__.return_value = mock_resp
+
+    client = PharosClient(chain_id=688689)
+    with pytest.raises(PharosClientError) as exc_info:
+        client.verify_network()
+    assert "Failed to query eth_chainId" in str(exc_info.value) or "RPC Error" in str(exc_info.value)
